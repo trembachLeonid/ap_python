@@ -1,0 +1,529 @@
+openapi: 3.0.1
+info:
+  title: Family Budget
+  description: "Family Budget API"
+  version: 1.0.0
+servers:
+  - url: https://localhost/api/v1
+  - url: http://localhost/api/v1
+tags:
+  - name: user
+  - name: family
+  - name: history
+paths:
+  /user:
+    post:
+      tags:
+        - user
+      summary: Create user
+      description: This can only be done by the logged in user.
+      operationId: createUser
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              properties:
+                username:
+                  type: string
+                  description: Updated username of the user
+                firstName:
+                  type: string
+                  description: Updated firstName of the user
+                lastName:
+                  type: string
+                  description: Updated lastName of the user
+                email:
+                  type: string
+                  description: Updated email of the user
+                password:
+                  type: string
+                  description: Updated password of the user
+                phone:
+                  type: string
+                  description: Updated phone of the user
+        required: true
+      responses:
+        200:
+          description: Successfully created
+          content:
+            application/json:
+              schema:
+                type: number
+                format: int64
+        405:
+          description: Invalid input
+          content: {}
+
+      x-codegen-request-body-name: body
+    put:
+      tags:
+        - user
+      summary: Update an existing user
+      operationId: updateUser
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              properties:
+                username:
+                  type: string
+                  description: Updated username of the user
+                firstName:
+                  type: string
+                  description: Updated firstName of the user
+                lastName:
+                  type: string
+                  description: Updated lastName of the user
+                email:
+                  type: string
+                  description: Updated email of the user
+                password:
+                  type: string
+                  description: Updated password of the user
+                phone:
+                  type: string
+                  description: Updated phone of the user
+        required: true
+      responses:
+        200:
+          description: Successfully updated
+          content: {}
+        400:
+          description: Invalid Username supplied
+          content: {}
+        406:
+          description: Invalid user field supplied
+          content: {}
+        403:
+          description: Not authorized
+          content: {}
+        500:
+          description: Cannot update user field
+      security:
+        - auth:
+            - modify:user
+    delete:
+      tags:
+        - user
+      summary: Delete existing user
+      description: This can only be done by the logged in user.
+      operationId: deleteUser
+      responses:
+        200:
+          description: Successfully deleted
+          content: {}
+        403:
+          description: Insufficient permissions
+          content: {}
+        404:
+          description: User not found
+          content: {}
+      security:
+        - auth:
+            - delete:user
+  /user/login:
+    get:
+      tags:
+        - user
+      summary: Logs user into the system
+      operationId: loginUser
+      parameters:
+        - name: username
+          in: query
+          description: The username for login
+          required: true
+          schema:
+            type: string
+        - name: password
+          in: query
+          description: The password for login in clear text
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: successful operation
+          headers:
+            X-Rate-Limit:
+              description: calls per hour allowed by the user
+              schema:
+                type: integer
+                format: int32
+            X-Expires-After:
+              description: date in UTC when token expires
+              schema:
+                type: string
+                format: date-time
+          content:
+            application/json:
+              schema:
+                type: string
+        400:
+          description: Invalid username/password supplied
+          content: {}
+  /user/logout:
+    get:
+      tags:
+        - user
+      summary: Logs out current logged in user session
+      operationId: logoutUser
+      responses:
+        default:
+          description: successful operation
+          content: {}
+
+  /user/{username}:
+    get:
+      tags:
+        - user
+      summary: Get user by user name
+      operationId: getUserByName
+      parameters:
+        - name: username
+          in: path
+          description: "The name that needs to be fetched. Use user1 for testing. "
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        400:
+          description: Invalid username supplied
+          content: {}
+        404:
+          description: User not found
+          content: {}
+  /user/getFamilyList:
+   get:
+      tags:
+        - user
+      summary: Get user's families
+      description: Returns a list of families in which user is
+      operationId: getFamilyList
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Family"
+        400:
+          description: Invalid ID supplied
+          content: {}
+        404:
+          description: Note not found
+          content: {}
+      security:
+        - auth:
+            - read:user
+    
+  /family:
+    post:
+      tags:
+        - family
+      summary: Create a new family budget
+      operationId: createFamily
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              properties:
+                familyname:
+                  type: string
+                members:
+                  type: array
+                  minLength: 3
+                  items:
+                    $ref: "#/components/schemas/User/properties/userId"
+        required: true
+      responses:
+        200:
+          description: Successfully created
+          content:
+            application/json:
+              schema:
+                type: number
+                format: int64
+        404:
+          description: Users not found
+          content: {}
+        405:
+          description: Invalid input
+          content: {}
+      security:
+        - auth:
+            - write:family
+      x-codegen-request-body-name: body
+  /family{familyId}:
+    put:
+      tags:
+        - family
+      summary: Update an existing family
+      operationId: updateFamily
+      parameters:
+        - name: familyId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              properties:
+                familyname:
+                  type: string
+                members:
+                  type: array
+                  minLength: 3
+                  items:
+                    $ref: "#/components/schemas/User/properties/userId"
+        required: true
+      responses:
+        200:
+          description: Successfully updated
+          content: {}
+        400:
+          description: Invalid family name supplied
+          content: {}
+        406:
+          description: Invalid family field supplied
+          content: {}
+        403:
+          description: Not authorized
+          content: {}
+        500:
+          description: Cannot update user field
+      security:
+        - auth:
+            - modify:family
+    delete:
+      tags:
+        - family
+      summary: Delete existing family
+      operationId: deleteFamily
+      parameters:
+        - name: familyId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        200:
+          description: Successfully deleted
+          content: {}
+        403:
+          description: Insufficient permissions
+          content: {}
+        404:
+          description: User not found
+          content: {}
+      security:
+        - auth:
+            - delete:family
+  /family/{familyId}/FamilyAccount:
+    get:
+      tags:
+        - family
+      summary: Show family budget
+      operationId: getBudgetFamily
+      parameters:
+        - name: familyId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Family/properties/currentMoney"
+        400:
+          description: Invalid ID supplied
+          content: {}
+        403:
+          description: Not authorized
+          content: {}
+      security:
+        - auth:
+            - read:family
+    put:
+      tags:
+        - family
+      summary: Withdraw/deposit Account
+      operationId: putAccountFamily
+      parameters:
+        - name: familyId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              properties:
+                change:
+                  $ref: "#/components/schemas/Operation"
+      responses:
+        200:
+          description: Successfully updated
+          content: {}
+        403:
+          description: Not authorized
+          content: {}
+        405:
+          description: Invalid input
+          content: {}
+      security:
+        - auth:
+          - write:user
+          - write:family
+  /history/{userId}:
+    get:
+      tags:
+        - history
+      summary: Get operation history by userID
+      description: Returns a list of edits user budget
+      operationId: getUserHistory
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Operation"
+        400:
+          description: Invalid ID supplied
+          content: {}
+        404:
+          description: Note not found
+          content: {}
+      security:
+        - auth:
+            - read:user
+  /history/{familyId}:
+    get:
+      tags:
+        - history
+      summary: Get operation history by familyID
+      description: Returns a list of edits family budget
+      operationId: getFamilyHistory
+      parameters:
+        - name: familyId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Operation"
+        400:
+          description: Invalid ID supplied
+          content: {}
+        404:
+          description: Note not found
+          content: {}
+      security:
+        - auth:
+            - read:user          
+components:
+  schemas:
+    User:
+      type: object
+      properties:
+        userId:
+          type: integer
+          format: int64
+        username:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
+        password:
+          type: string
+        phone:
+          type: string
+        currentMoney:
+          type: number
+          format: float
+      xml:
+        name: User
+    Family:
+      type: object
+      properties:
+        familyId:
+          type: integer
+          format: int64
+        familyname:
+          type: string
+        membersId:
+          type: array
+          minLength: 3
+          items:
+            $ref: "#/components/schemas/User/properties/userId"
+        currentMoney:
+          type: number
+          format: float
+    Operation:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        userId:
+          $ref: "#/components/schemas/User/properties/userId"
+        familyId:
+          $ref: "#/components/schemas/Family/properties/familyId"
+        moneyChange:
+          type: number
+          format: float
+          example: -300; 50
+        date:
+          type: string
+          format: date-time
+  securitySchemes:
+    auth:
+      type: oauth2
+      flows:
+        implicit:
+          authorizationUrl: http://notestore.swagger.io/oauth/dialog
+          scopes:
+            read:user: read user information
+            delete:user: delete user
+            change:user: modify user information
+            write:family: modify family budget
+            read:family: read your familt budget info
+            
