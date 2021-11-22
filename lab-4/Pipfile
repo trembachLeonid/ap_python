@@ -6,6 +6,9 @@ name = "pypi"
 [packages]
 flask = "*"
 waitress = "*"
+alembic = "*"
+mysqlclient = "*"
+mysql-connector = "*"
 
 [dev-packages]
 
