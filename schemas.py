@@ -13,7 +13,7 @@ class user_schema(Schema):
 
 class family_schema(Schema):
     familyName = fields.String(validate=Length(min=5))
-    users = fields.List(fields.String)
+    users = fields.List(fields.String,validate=Length(min=2))
     currentMoney = fields.Float()
     
 class login_schema(Schema):

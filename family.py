@@ -25,22 +25,21 @@ def add_family():
     user = session.query(User).filter_by(username=logged).first()
     if not user:
         return Response(status=401, response='You are not allowed to do this')
-    exists = session.query(Family).filter_by(familyName=data['familyName']).first()
-    if exists:
-        return Response(status=400, response='Family with such name already exists')
-    if len(data['users']) < 2:
-        return Response(status=400, response='Not enough usernames provided')
-
-    new_family = Family(familyName=data['familyName'], currentMoney=0)
-    session.add(new_family)
-    session.commit()
-    session.add(FamilyMemberRelation(userId=user.id, familyId=new_family.id))
     for i in data['users']:
+        if user.username == i:
+            return Response(status=400, response='You cannot pass yourself as parameter')
         usr = session.query(User).filter_by(username=i).first()
         if not usr:
             return Response(status=404, response='Provided user data was not found')
+    exists = session.query(Family).filter_by(familyName=data['familyName']).first()
+    if exists:
+        return Response(status=400, response='Family with such name already exists')
+    new_family = Family(familyName=data['familyName'], currentMoney=0)
+    session.add(new_family)
+    for i in data['users']:
+        usr = session.query(User).filter_by(username=i).first()
         session.add(FamilyMemberRelation(userId=usr.id, familyId=new_family.id))
-
+    session.add(FamilyMemberRelation(userId=user.id, familyId=new_family.id))
     session.commit()
     session.close()
     return Response(response='New family was successfully created!')
@@ -60,24 +59,32 @@ def update_family(id):
     user = session.query(User).filter_by(username=logged).first()
     if not user:
         return Response(status=401, response='You are not allowed to do that')
-    memberIds = session.query(FamilyMemberRelation).filter_by(familyId=id)
+    members = session.query(FamilyMemberRelation).filter_by(familyId=id)
     checkId = []
-    for i in memberIds:
+    for i in members:
         checkId.append(i.userId)
     if not user.id in checkId:
         return Response(status=401, response='You are not allowed to do that')
-    exists = session.query(Family).filter_by(familyName=data['familyName']).first()
-    if exists:
-        return Response(status=400, response='Family with such name already exists')
+    if 'users' in data.keys():
+        for i in data['users']:
+            if user.username == i:
+                return Response(status=400, response='You cannot pass yourself as parameter')
+            usr = session.query(User).filter_by(username=i).first()
+            if not usr:
+                return Response(status=404, response='Provided user data was not found')
+            if usr.id in checkId:
+                return Response(status=400, response='One of the users is already here')
+    if 'familyName' in data.keys():
+        exists = session.query(Family).filter_by(familyName=data['familyName']).first()
+        if exists:
+            return Response(status=400, response='Family with such name already exists')
 
     if 'familyName' in data.keys():
         family.familyName = data['familyName']
     if 'users' in data.keys():
         for user in data['users']:
             usr = session.query(User).filter_by(username=user).first()
-            if not usr:
-                return Response(status=404, response='Provided user data was not found')
-        session.add(FamilyMemberRelation(userId=id, familyId=family.id))
+            session.add(FamilyMemberRelation(userId=usr.id, familyId=family.id))
     session.commit()
     session.close()
     return Response(response="Family has been updated")
@@ -100,6 +107,9 @@ def delete_family(id):
         return Response(status=401, response='You are not allowed to do that')
     users = session.query(FamilyMemberRelation).filter_by(familyId=id)
     operations = session.query(Operation).filter_by(familyId=id)
+    if memberIds is not None:
+        for m in memberIds:
+            session.delete(m)
     if operations is not None:
         for o in operations:
             session.delete(o)
