@@ -18,21 +18,16 @@ from sqlalchemy import (
 )
 
 Base = declarative_base()
-engine = create_engine("mysql://root:password@localhost/family_budget_db", echo=False)
-session = sessionmaker(bind=engine)
-s = session()
-
+engine = create_engine("mysql://root:12345@localhost/family_budget_db", echo=False)
+Session = sessionmaker(bind=engine)
+s = Session()
 
 class FamilyMemberRelation(Base):
     __tablename__ = "family_members"
-    user = Column(Integer, ForeignKey("users.id"), primary_key=True)
-    family = Column(Integer, ForeignKey("families.id"), primary_key=True)
+    userId = Column(Integer, ForeignKey("users.id"), primary_key=True)
+    familyId = Column(Integer, ForeignKey("families.id"), primary_key=True)
     users = relationship("User")
     families = relationship("Family")
-    __table_args__ = (
-        PrimaryKeyConstraint(user, family),
-        {},
-    )
 
 
 class Operation(Base):
@@ -48,46 +43,25 @@ class User(Base):
     __tablename__ = "users"
     id = Column(Integer, primary_key=True)
     username = Column(String(30), unique=True)
-    first_name = Column(String(30))
-    last_name = Column(String(30))
+    firstName = Column(String(30))
+    lastName = Column(String(30))
     email = Column(String(30), unique=True)
-    password = Column(String(15))
+    password = Column(String(100))
     phone = Column(String(20), unique=True)
     currentMoney = Column(Float)
-
-    def __str__(self):
-        return (
-            f"fName = {self.first_name}\n"
-            f"lName = {self.last_name}\n"
-            f"email = {self.email}\n "
-            f"phone = {self.phone}\n"
-            f"money = {self.currentMoney}\n"
-        )
-
 
 class Family(Base):
     __tablename__ = "families"
     id = Column(Integer, primary_key=True)
-    familyname = Column(String(30))
-
+    familyName = Column(String(30))
     currentMoney = Column(Float)
-
-    def __str__(self):
-        return (
-            f"fName = {self.first_name}\n"
-            f"lName = {self.last_name}\n"
-            f"email = {self.email}\n "
-            f"phone = {self.phone}\n"
-            f"money = {self.currentMoney}\n"
-        )
-
 
 if __name__ == "__main__":
     user1 = User(
         id=1,
         username="ba1nan",
-        first_name="Ivan",
-        last_name="Franko",
+        firstName="Ivan",
+        lastName="Franko",
         email="banan@ex.com",
         password="7548Rfd8f3",
         phone="+380682314564",
@@ -96,8 +70,8 @@ if __name__ == "__main__":
     user2 = User(
         id=2,
         username="yabanan",
-        first_name="Oleg",
-        last_name="Franko",
+        firstName="Oleg",
+        lastName="Franko",
         email="ban@ex.com",
         password="7548Rfd8f3",
         phone="+380542312364",
@@ -106,18 +80,18 @@ if __name__ == "__main__":
     user3 = User(
         id=3,
         username="banan",
-        first_name="Olena",
-        last_name="Franko",
+        firstName="Olena",
+        lastName="Franko",
         email="plfdfde@ex.com",
         password="7548Rfd8f3",
         phone="+380682312364",
         currentMoney=0,
     )
 
-    family = Family(id=1, familyname="Brawl Stars", currentMoney=50)
-    member1 = FamilyMemberRelation(user=1, family=1)
-    member2 = FamilyMemberRelation(user=2, family=1)
-    member3 = FamilyMemberRelation(user=3, family=1)
+    family = Family(id=1, familyName="Brawl Stars", currentMoney=50)
+    member1 = FamilyMemberRelation(userId=1, familyId=1)
+    member2 = FamilyMemberRelation(userId=2, familyId=1)
+    member3 = FamilyMemberRelation(userId=3, familyId=1)
 
     operation = Operation(id=1, userId=1, familyId=1, moneyChange=50, date=datetime.now())
 
